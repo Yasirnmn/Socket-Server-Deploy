@@ -4,21 +4,24 @@ const { Server } = require("socket.io");
 const cors = require("cors");
 
 const app = express();
+app.use(cors());
 
-// Allow your frontend domain (for now, keep it open for testing)
-app.use(cors({ origin: "*", methods: ["GET", "POST"] }));
+// Health check route (optional)
+app.get("/", (req, res) => {
+  res.send("Socket server is running!");
+});
 
 const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "*", // Replace with your Vercel frontend URL for production
+    origin: "*", // Replace with your Vercel URL later
     methods: ["GET", "POST"],
   },
-  transports: ["websocket"], // Force WebSocket
+  transports: ["websocket", "polling"], // allow both for fallback
+  allowEIO3: true, // support older Socket.IO clients (if needed)
 });
 
-// Handle socket connections
 io.on("connection", (socket) => {
   console.log(`Client connected: ${socket.id}`);
 
@@ -32,7 +35,6 @@ io.on("connection", (socket) => {
   });
 });
 
-// Railway provides PORT automatically
 const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
   console.log(`🚀 Socket.IO server running on port ${PORT}`);
