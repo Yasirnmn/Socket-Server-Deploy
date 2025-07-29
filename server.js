@@ -6,7 +6,7 @@ const cors = require("cors");
 const app = express();
 app.use(cors());
 
-// Health check route (optional)
+// Test route
 app.get("/", (req, res) => {
   res.send("Socket server is running!");
 });
@@ -15,11 +15,12 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "*", // Replace with your Vercel URL later
+    origin: "*", // replace with your Vercel URL in production
     methods: ["GET", "POST"],
   },
-  transports: ["websocket", "polling"], // allow both for fallback
-  allowEIO3: true, // support older Socket.IO clients (if needed)
+  transports: ["polling", "websocket"], // support both
+  allowEIO3: true, // support older clients
+  path: "/socket.io", // explicitly set
 });
 
 io.on("connection", (socket) => {
