@@ -1,51 +1,39 @@
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
+const cors = require("cors");
 
 const app = express();
 
-// Keep-alive HTTP route (for Railway health checks)
-app.get("/", (req, res) => {
-  res.send("Socket server is running and healthy!");
-});
+// Allow your frontend domain (for now, keep it open for testing)
+app.use(cors({ origin: "*", methods: ["GET", "POST"] }));
 
-// Create HTTP server
 const server = http.createServer(app);
 
-// Initialize Socket.IO with DEFAULT path (no custom path)
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:3000", "https://thecakery.uk"],
+    origin: "*", // Replace with your Vercel frontend URL for production
     methods: ["GET", "POST"],
-    credentials: true,
   },
+  transports: ["websocket"], // Force WebSocket
 });
 
-// Socket events
+// Handle socket connections
 io.on("connection", (socket) => {
-  console.log("✅ Client connected:", socket.id);
+  console.log(`Client connected: ${socket.id}`);
 
   socket.on("join_branch", (branchId) => {
     socket.join(branchId);
-    console.log(`📦 Client joined branch room: ${branchId}`);
-  });
-
-  socket.on("new_order", (order) => {
-    console.log("📦 New order received:", order);
-    io.emit("new_order", order);
+    console.log(`Client ${socket.id} joined branch: ${branchId}`);
   });
 
   socket.on("disconnect", () => {
-    console.log("❌ Client disconnected:", socket.id);
-  });
-
-  socket.on("error", (err) => {
-    console.error("⚠️ Socket error:", err);
+    console.log(`Client disconnected: ${socket.id}`);
   });
 });
 
-// Start the server
-const PORT = process.env.PORT || 3000;
+// Railway provides PORT automatically
+const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
   console.log(`🚀 Socket.IO server running on port ${PORT}`);
 });
